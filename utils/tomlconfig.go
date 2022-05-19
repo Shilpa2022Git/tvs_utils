@@ -43,13 +43,12 @@ func NewConfig() *Config {
 		defer lock.Unlock()
 
 		if conf == nil {
-
 			if _, err := toml.DecodeFile("./infrastructure/config.toml", &conf); err != nil {
 				fmt.Println(err)
+				panic("Could not able to read configuration")
 			}
 
 			fmt.Printf("%#v\n", conf)
-			fmt.Println("db value \n", conf.Db.Port)
 			return conf
 		} else {
 			return conf

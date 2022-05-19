@@ -40,7 +40,7 @@ func (j *jwtService) GenerateServiceValidationToken(chasisno, vehicleregno strin
 		chasisno,
 		vehicleregno,
 		jwt.StandardClaims{
-			ExpiresAt: time.Now().AddDate(1, 0, 0).Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * 45).Unix(), //time.Now().AddDate(1, 0, 0).Unix(),
 			Issuer:    j.issuer,
 			IssuedAt:  time.Now().Unix(),
 		},
@@ -71,7 +71,8 @@ func verifyToken(token, secretKey string) (*jwt.Token, error) {
 func (j *jwtService) VerifyToken(token string) (*Payload, error) {
 	jwtToken, err := jwt.ParseWithClaims(token, &Payload{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
+			fmt.Println("Algo used ", token.Header["alg"])
+			return nil, fmt.Errorf("Unexpected signing method %s", token.Header["alg"])
 		}
 
 		str, _ := base64.StdEncoding.DecodeString(j.secretKey)
