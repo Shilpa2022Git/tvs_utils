@@ -1,6 +1,6 @@
-module github.com/Shilpa2022Git/tvs_utils
+module github.com/KadirSheikh/tvs_utils
 
-go 1.14
+go 1.17
 
 require (
 	github.com/BurntSushi/toml v1.1.0

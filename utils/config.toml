@@ -1,0 +1,16 @@
+[database]
+server="127.0.0.1"
+port="3306"
+name="trafficviolationsystem"
+user="root"
+password="root123"
+host=""
+
+[server]
+port="9001"
+
+[servicecommunication]
+port="5000"
+
+[authkey]
+scretkey="trafficviolationsystemjwt"

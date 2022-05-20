@@ -9,11 +9,18 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-type JWTService interface {
-	//GenerateToken(UserID string) string
+type JWT interface {
 	GenerateServiceValidationToken(chasisno, vehicleregno string) string
+	GenerateToken(Userid uint64, Loginid string, Roleid uint64) string
 	ValidateToken(token string) (*jwt.Token, error)
 	VerifyToken(token string) (*Payload, error)
+}
+
+type jwtCustomClaim struct {
+	Userid  uint64 `json:"userid"`
+	Loginid string `json:"loginid"`
+	Roleid  uint64 `json:"roleid"`
+	jwt.StandardClaims
 }
 
 type Payload struct {
@@ -27,11 +34,31 @@ type jwtService struct {
 	issuer    string
 }
 
-func NewJWTService(secretkey string) JWTService {
+func NewJWTService(secretkey string) JWT {
 	return &jwtService{
 		issuer:    "trafficviolationsystem",
 		secretKey: secretkey,
 	}
+}
+
+func (j *jwtService) GenerateToken(Userid uint64, Loginid string, Roleid uint64) string {
+
+	claims := &jwtCustomClaim{
+		Userid,
+		Loginid,
+		Roleid,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Minute * 45).Unix(),
+			Issuer:    j.issuer,
+			IssuedAt:  time.Now().Unix(),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	t, err := token.SignedString([]byte(j.secretKey))
+	if err != nil {
+		panic(err)
+	}
+	return t
 }
 
 func (j *jwtService) GenerateServiceValidationToken(chasisno, vehicleregno string) string {
@@ -40,7 +67,7 @@ func (j *jwtService) GenerateServiceValidationToken(chasisno, vehicleregno strin
 		chasisno,
 		vehicleregno,
 		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Minute * 45).Unix(), //time.Now().AddDate(1, 0, 0).Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * 45).Unix(),
 			Issuer:    j.issuer,
 			IssuedAt:  time.Now().Unix(),
 		},
@@ -56,15 +83,11 @@ func (j *jwtService) GenerateServiceValidationToken(chasisno, vehicleregno strin
 }
 
 func (j *jwtService) ValidateToken(token string) (*jwt.Token, error) {
-	return verifyToken(token, j.secretKey)
-}
-
-func verifyToken(token, secretKey string) (*jwt.Token, error) {
-	return jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method %v", t.Header["alg"])
+	return jwt.Parse(token, func(t_ *jwt.Token) (interface{}, error) {
+		if _, ok := t_.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method %v", t_.Header["alg"])
 		}
-		return []byte(secretKey), nil
+		return []byte(j.secretKey), nil
 	})
 }
 
@@ -80,14 +103,6 @@ func (j *jwtService) VerifyToken(token string) (*Payload, error) {
 	})
 
 	fmt.Println("verify Error : ", err, err.(*jwt.ValidationError))
-
-	// if err != nil {
-	// 	verr, ok := err.(*jwt.ValidationError)
-	// 	if ok && errors.Is(verr.Inner, errors.New("token is expired")) {
-	// 		return nil, errors.New("token is invalid")
-	// 	}
-	// 	return nil, errors.New("token is invalid")
-	// }
 
 	payload, ok := jwtToken.Claims.(*Payload)
 	if !ok {
