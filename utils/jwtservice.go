@@ -72,7 +72,7 @@ func (j *jwtService) VerifyToken(token string) (*Payload, error) {
 	jwtToken, err := jwt.ParseWithClaims(token, &Payload{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			fmt.Println("Algo used ", token.Header["alg"])
-			return nil, fmt.Errorf("Unexpected signing method %s", token.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method %s", token.Header["alg"])
 		}
 
 		str, _ := base64.StdEncoding.DecodeString(j.secretKey)

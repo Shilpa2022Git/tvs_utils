@@ -34,22 +34,21 @@ var StatusCodes = map[error]int{
 	ErrExpiredAccessToken:        401,
 	ErrExpiredRefreshToken:       401,
 	ErrInvalidRequestParam:       400,
-	ErrConflict:                  400,
-	ErrRecordNotFound:            400,
+	ErrConflict:                  409,
+	ErrRecordNotFound:            404,
 	ErrInvalidSyntax:             400,
 }
 
 func BuildResponse(err error, title string, data interface{}, message error, c *gin.Context) {
 	if err != nil {
-
 		if _, ok := StatusCodes[err]; ok {
 			if err == message {
-				c.AbortWithStatusJSON(http.StatusBadRequest,
+				c.AbortWithStatusJSON(StatusCodes[err],
 					gin.H{
 						"error": err.Error(),
 					})
 			} else {
-				c.AbortWithStatusJSON(http.StatusBadRequest,
+				c.AbortWithStatusJSON(StatusCodes[err],
 					gin.H{
 						"error":   err.Error(),
 						"message": message.Error(),
